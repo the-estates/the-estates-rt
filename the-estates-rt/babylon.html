@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta property="og:title" content="The Estates Lightweight Viewer">
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#28a745">
+    <meta property="og:image" content="https://miro.medium.com/max/700/1*u2Cpya9B7MP_PjeMC-G8ZA.jpeg">
+    <meta property="og:description" content="
+    The Estates Viewer
+    The 3 in web3 stands for 3d.
+    
+    🔗 𝗢𝗳𝗳𝗶𝗰𝗶𝗮𝗹 𝗟𝗶𝗻𝗸𝘀
+    ▶️ Website: https://theestates.io
+    ▶️ Twitter: https://twitter.com/TheEstatesNFT">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    
+        <title>The Estates</title>
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-28726355-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'UA-28726355-1');
+        </script>
+
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs-gui@3.3.0/babylon.gui.min.js"></script>
+<script async src='/cdn-cgi/bm/cv/669835187/api.js'></script><script async src='/cdn-cgi/bm/cv/669835187/api.js'></script></head>
+
+<body>
+
+    <canvas id="renderCanvas" touch-action="none" width="2560" height="1240" style="touch-action: none;" tabindex="1"></canvas> <!-- touch-action="none" for best results from PEP -->
+
+    <script>
+        const canvas = document.getElementById("renderCanvas"); // Get the canvas element
+        var engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        let digi = urlParams.get('digi')
+        if (!(digi > ""))
+        {
+          digi = "1_baseline_blueprint_lvl_1";
+        }
+        let color = urlParams.get('color')
+        if (!(color > ""))
+        {
+          color = "2C2C2C";
+        }
+        console.log("Loading Fungi: " + digi + " BG Color: #" + color);
+        let rgb = BABYLON.Color3.FromHexString("#" + color);
+
+
+        //SCENE CONSTRUCTIONS
+        const createScene = function () {
+
+            const scene = new BABYLON.Scene(engine);
+
+            ///////////////
+            //SCENE SET-UP/
+            ///////////////
+            //SOLID COLOR BACKGROUND
+            scene.clearColor = new BABYLON.Color4(rgb.r, rgb.g, rgb.b, 1);
+
+
+            ///////////////
+            ////FOG////////
+            ///////////////
+            //scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
+            //scene.fogStart = 10.0;
+            //scene.fogEnd = 30.0;
+            //scene.fogColor = new BABYLON.Color4(rgb.r + .1, rgb.g + .1, rgb.b + .1, 1);
+
+            return scene;
+        };
+
+        const scene = createScene(); //Call the createScene function
+
+        ///////////////
+        ///CAMERA//////
+        ///////////////
+        const camera = new BABYLON.ArcRotateCamera("camera", BABYLON.Tools.ToRadians(75), BABYLON.Tools.ToRadians(75), 3, new BABYLON.Vector3(-1,.5,0), scene);
+        //ATTACH CAMERA CONTROL (No Pan!)
+        camera.attachControl(false, false, -1);
+        //CAMERA AUTO SPIN
+        camera.useAutoRotationBehavior = true;
+        //MOUSE WHEEL ZOOM (HIGHER VALUE TO SMOOTH)
+        camera.wheelPrecision = 20;
+        //MINIMUM ZOOM DISTANCE
+        camera.lowerRadiusLimit = 2.5;
+        //MAXIMUM ZOOM DISTANCE
+        camera.upperRadiusLimit = 5;
+        //MINIMUM ROTATION
+        camera.upperBetaLimit = Math.PI /2;
+        //LAYER MASK
+        camera.layerMask = 1;
+
+ 
+
+
+        //GUI CAMERA
+        var camera2 = new BABYLON.ArcRotateCamera("Camera", 0, 0, 0, BABYLON.Vector3.Zero(), scene);
+        camera2.layerMask = 2;
+
+
+        //ACTIVATE BOTH CAMERAS
+        scene.activeCameras = [camera, camera2];
+
+
+        ///////////////
+        ///POST STACK//
+        ///////////////
+        var fxaa = new BABYLON.FxaaPostProcess("fxaa", 1.0, camera);
+        var postProcess = new BABYLON.ImageProcessingPostProcess("processing", 1.0, camera);
+        postProcess.vignetteWeight = 4;
+        postProcess.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
+        postProcess.vignetteEnabled = true;
+
+        ///////////////
+        ////GUI////////
+        ///////////////
+        var advancedTexture = new BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        advancedTexture.layer.layerMask = 2;
+        //RIGHT PANEL
+        var UiPanelRight = new BABYLON.GUI.StackPanel();
+        UiPanelRight.fontSize = "14px";
+        UiPanelRight.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        //UiPanelRight.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        UiPanelRight.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        advancedTexture.addControl(UiPanelRight);
+
+        //LEFT PANEL
+        var UiPanel1 = new BABYLON.GUI.StackPanel();
+        UiPanel1.fontSize = "14px";
+        UiPanel1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        UiPanel1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        advancedTexture.addControl(UiPanel1);
+
+        //THE GROUND
+        //var ground = BABYLON.Mesh.CreateGround("ground", 1000, 1000, 1, scene, false);
+        var ground = BABYLON.MeshBuilder.CreateSphere("ground", {diameter: 100, slice: 0.6, sideOrientation: 2});
+        var groundMaterial = new BABYLON.StandardMaterial("ground", scene);
+
+        groundMaterial.diffuseColor = new BABYLON.Color4(rgb.r + .1, rgb.g + .1, rgb.b + .1, 0);
+        groundMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+        ground.material = groundMaterial;
+        ground.receiveShadows = true;
+        ground.rotation.z = 3.14159;
+        ground.position.y = 50;
+        ground.layerMask = 1;
+
+        ///////////////
+        ///LIGHTS//////
+        ///////////////
+        //CONSTRUCTORS: HemisphericLight
+        const hlight = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 2, 0));
+        hlight.groundColor = new BABYLON.Color3(.2,.4,1);
+        hlight.intensity = .3;
+
+        //CONSTRUCTORS: PointLight
+        const pointLight = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(.7, 3, .7), scene);
+        pointLight.intensity = 10;
+        pointLight.diffuse = new BABYLON.Color3(1, 1, 1);
+        pointLight.range = 12;
+        pointLight.excludedMeshes = [ground];
+
+        //CONSTRUCTORS: PointLightGround
+        const pointLightGround = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(.7, 3, .7), scene);
+        pointLightGround.intensity = 1.3;
+        pointLightGround.diffuse = new BABYLON.Color3(1, 1, 1);
+        pointLightGround.range = 5;
+
+        //CONSTRUCTORS: Directional
+        //var light = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(0, -.5, -1), scene);
+        var light = new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(-0.4, -1, -.5), scene);
+        light.position = new BABYLON.Vector3(0, 2, 2);
+        light.intensity= 1;
+
+        const shadowGenerator = new BABYLON.ShadowGenerator(512, light);
+        //shadowGenerator.usePoissonSampling = true;
+        //shadowGenerator.usePercentageCloserFiltering = true;
+        shadowGenerator.useBlurExponentialShadowMap = true;        
+        shadowGenerator.layerMask = 1;
+
+        
+        ////////////////////////////
+        ///DRAGON MESH LOADING//////
+        ////////////////////////////
+        let dragonIdle;
+        let isIdle = false;
+
+        //MAIN DRAGON LOADER        
+        //BABYLON.SceneLoader.ImportMesh("", "https://vxassets.digidragonz.com/" + digi + "/", digi + ".glb", scene, (newMeshes, particleSystems, skeletons, animationGroups) => {
+
+        BABYLON.SceneLoader.ImportMesh("", "https://d1aic8n0hfmsy0.cloudfront.net/", digi + ".glb", scene, (newMeshes, particleSystems, skeletons, animationGroups) => {
+          dragon = newMeshes[0];
+          dragon.scaling = new BABYLON.Vector3(.001,.001,.001);
+          dragon.position = new BABYLON.Vector3(0,.1,-1);
+          //dragonIdle = scene.getAnimationGroupByName("DigiDragonz_Idle");
+          shadowGenerator.addShadowCaster(dragon, true);
+          dragon.layerMask = 1;
+        })
+        
+
+        var button1 = new BABYLON.GUI.Button.CreateSimpleButton("but1", "Start/Stop rotating");
+            button1.paddingTop = "10px";
+            button1.width = "120px";
+            button1.height = "50px";
+            button1.color = "white";
+            button1.background = "green";
+            button1.onPointerDownObservable.add(()=> {
+              //camera2.useAutoRotationBehavior = !camera2.useAutoRotationBehavior;
+            });
+            //UiPanel1.addControl(button1);
+
+
+
+        var buttonPlayPause = BABYLON.GUI.Button.CreateImageOnlyButton("but1", "/images/playIcon.png");
+            buttonPlayPause.width = "64px";
+            buttonPlayPause.height = "64px";
+            buttonPlayPause.paddingTop = "5px";
+            buttonPlayPause.paddingLeft = "5px";
+            buttonPlayPause.color = "transparent";
+            buttonPlayPause.alpha = 1;
+
+            // -----------------------------------------------------
+                // Remove current pointerDownAnimation - avoid downscale.
+                // Change to a different action - rotate and colorize.
+                buttonPlayPause.pointerEnterAnimation = function() {
+                   this.scaleX += 0.05;
+                   this.scaleY += 0.05;
+                }
+                // Remove current pointerUpAnimation - avoid upscale
+                buttonPlayPause.pointerOutAnimation = function() {
+                  this.scaleX -= 0.05;
+                  this.scaleY -= 0.05;
+                }
+                buttonPlayPause.pointerDownAnimation = function() {
+                   this.scaleX -= 0.1;
+                   this.scaleY -= 0.1;
+                }
+                // Remove current pointerUpAnimation - avoid upscale
+                buttonPlayPause.pointerUpAnimation = function() {
+                  this.scaleX += 0.1;
+                  this.scaleY += 0.1;
+                }
+            // -----------------------------------------------------
+
+            //buttonPlayPause.onPointerDownObservable.add(() => {
+              //isIdle = !isIdle;
+              //isIdle ? dragonIdle.pause() : dragonIdle.restart();
+            //});
+            //UiPanel1.addControl(buttonPlayPause);
+
+
+                       //SCREENSHOT
+           var buttonScreenshot = BABYLON.GUI.Button.CreateImageOnlyButton("but1", "https://enigmafactorygames.com/digidragonz/images/ssIcon.png");
+            buttonScreenshot.width = "64px";
+            buttonScreenshot.height = "64px";
+            buttonScreenshot.paddingTop = "5px";
+            buttonScreenshot.paddingLeft = "5px";
+            buttonScreenshot.color = "transparent";
+            buttonScreenshot.alpha = 1;
+
+            // -----------------------------------------------------
+                // Remove current pointerDownAnimation - avoid downscale.
+                // Change to a different action - rotate and colorize.
+                buttonScreenshot.pointerEnterAnimation = function() {
+                   this.scaleX += 0.05;
+                   this.scaleY += 0.05;
+                }
+                // Remove current pointerUpAnimation - avoid upscale
+                buttonScreenshot.pointerOutAnimation = function() {
+                  this.scaleX -= 0.05;
+                  this.scaleY -= 0.05;
+                }
+                buttonScreenshot.pointerDownAnimation = function() {
+                   this.scaleX -= 0.1;
+                   this.scaleY -= 0.1;
+                }
+                // Remove current pointerUpAnimation - avoid upscale
+                buttonScreenshot.pointerUpAnimation = function() {
+                  this.scaleX += 0.1;
+                  this.scaleY += 0.1;
+                }
+            // -----------------------------------------------------
+
+            buttonScreenshot.onPointerDownObservable.add(() => {
+              BABYLON.Tools.CreateScreenshot(engine, camera, {width: canvas.width,height: canvas.height});
+            });
+            const inIframe = window.self !== window.top;
+              if (!inIframe)
+                UiPanel1.addControl(buttonScreenshot);
+
+           //////////////
+            ////SLIDER////
+            //////////////
+            var HueSlider = new BABYLON.GUI.Slider();
+              HueSlider.paddingTop = "5px";
+              HueSlider.paddingRight = "5px";
+              HueSlider.paddingLeft = "5px";
+              HueSlider.height = "30px";
+              HueSlider.width = "100px";
+              HueSlider.maximum = "360";
+              HueSlider.onValueChangedObservable.add(function(value) { // value is a color3
+                BABYLON.Color3.HSVtoRGBToRef(value,.35,.7,rgb);
+                //rgb = value;
+                console.log("Hue: " + value + " BG Color: #" + rgb.toHexString());
+                groundMaterial.diffuseColor = new BABYLON.Color4(rgb.r + .1, rgb.g + .1, rgb.b + .1, 1);
+                scene.clearColor = new BABYLON.Color4(rgb.r, rgb.g, rgb.b, 1);
+                scene.fogColor = rgb;
+                picker.value = rgb;
+              });
+            //UiPanelRight.addControl(HueSlider);
+
+            
+            ////////////////////
+            ////Color Picker////
+            ////////////////////
+            var picker = new BABYLON.GUI.ColorPicker();
+              picker.paddingTop = "5px";
+              picker.paddingRight = "5px";
+              picker.paddingLeft = "5px";
+              picker.value = rgb;
+              picker.size = "80px";
+
+              picker.onValueChangedObservable.add(function(value) { // value is a color3
+              rgb = value;
+              groundMaterial.diffuseColor = new BABYLON.Color4(rgb.r + .1, rgb.g + .1, rgb.b + .1, 1);
+              scene.clearColor = new BABYLON.Color4(rgb.r, rgb.g, rgb.b, 1);
+              scene.fogColor = rgb;
+              });
+            UiPanelRight.addControl(picker);
+
+
+        //DEBUG
+        //scene.debugLayer.show();
+
+        // Register a render loop to repeatedly render the scene
+        engine.runRenderLoop(function () {
+                scene.render();
+        });
+
+        // Watch for browser/canvas resize events
+        window.addEventListener("resize", function () {
+                engine.resize();
+        });
+    </script>
+
+<script type="text/javascript">(function(){window['__CF$cv$params']={r:'6d6e431b8a493a65',m:'6_iyVEu69kKEDrI1_x9EFFMZT_kH0thSBLv1TZ.bOao-1643750829-0-AYhOa9IwIQddQ2uofYUlXJCw1Bd+cAhMQwVO31WkRzbdpK+ImmV6owZQ48voUNBU+Om0EjJ74f5sZ/sJBfxX/sLdOq74Cqcd95XiPVx98TSs1J3TyVC+e4/PQxuC9cgR8IcsXUV1eLLXEqc5t1OvJw7FbkRJFlP2HiPFxgBxcwSD7BbfPZkES2pr1HIuyFZbRQ==',s:[0x61f12ecd5d,0x710ee2e485],}})();</script><script type="text/javascript">(function(){window['__CF$cv$params']={r:'6d6fa2b1caeb2afe',m:'lUZx4G0CVhzACSo5AglB355jwNRdeFNnD0PW4it3LKo-1643765230-0-AbjqoZPqVY8mkLDpS/sU76/A724NQiq7MSJkySwn4gt8vyNLPxYlHL7RzrJ51SCItH/tFnRe/r8RxdrNmTDsMf+5rLlHacxt/V1zGVGHZAuhPmNOromoVE1HBTd7x4HjYlX+LBkVFh9AKzjERsjP2AarL593jJpWiAH3IBwIA/CIPHrPrAjqna4/CvDAMZLOcA==',s:[0x66a8cf262c,0x661941dea9],}})();</script>
+
+
+</body></html>
